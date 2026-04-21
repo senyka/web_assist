@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - OpenCode Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: #1a252f;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header p {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
+        .new-chat-btn {
+            margin: 15px;
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .new-chat-btn:hover {
+            background: #2980b9;
+        }
+        
+        .sessions-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .session-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #34495e;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .session-item:hover, .session-item.active {
+            background: #3498db;
+        }
+        
+        .session-item .session-title {
+            font-size: 14px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .session-item .session-info {
+            font-size: 11px;
+            color: #95a5a6;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            padding: 15px 30px;
+            background: white;
+            border-bottom: 1px solid #e1e1e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left h1 {
+            font-size: 20px;
+            color: #2c3e50;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .admin-link {
+            padding: 8px 16px;
+            background: #9b59b6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .admin-link:hover {
+            background: #8e44ad;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        
+        .messages {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: #3498db;
+        }
+        
+        .message.assistant .message-avatar {
+            background: #27ae60;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+        
+        .message.user .message-content {
+            background: #3498db;
+            color: white;
+            border-top-right-radius: 4px;
+        }
+        
+        .message.assistant .message-content {
+            background: white;
+            color: #2c3e50;
+            border: 1px solid #e1e1e1;
+            border-top-left-radius: 4px;
+        }
+        
+        .message-content pre {
+            background: #1a252f;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .message-content code {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .input-container {
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #e1e1e1;
+        }
+        
+        .input-form {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e1e1e1;
+            border-radius: 25px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .send-btn {
+            padding: 15px 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .send-btn:hover {
+            background: #2980b9;
+        }
+        
+        .send-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #95a5a6;
+        }
+        
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>🤖 OpenCode</h2>
+            <p>AI Assistant</p>
+        </div>
+        
+        <button class="new-chat-btn" onclick="newChat()">+ Новый чат</button>
+        
+        <div class="sessions-list" id="sessionsList">
+            {% for s in sessions %}
+            <div class="session-item {% if current_session_id == s.id %}active{% endif %}" 
+                 onclick="loadSession({{ s.id }})">
+                <div class="session-title">Чат #{{ s.id }}</div>
+                <div class="session-info">{{ s.messages|length }} сообщений</div>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <h1>💬 Чат с ассистентом</h1>
+            </div>
+            <div class="header-right">
+                <a href="{{ url_for('admin') }}" class="admin-link">📊 Админ панель</a>
+                <div class="user-info">
+                    <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+                    <span>{{ current_user.username }}</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
+        </header>
+        
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="empty-state">
+                    <h2>Добро пожаловать!</h2>
+                    <p>Начните новый чат или выберите существующий</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <form class="input-form" onsubmit="sendMessage(event)">
+                <textarea class="message-input" id="messageInput" 
+                          placeholder="Введите ваш запрос..." rows="1"></textarea>
+                <button type="submit" class="send-btn" id="sendBtn">Отправить</button>
+            </form>
+        </div>
+    </main>
+    
+    <script>
+        let currentSessionId = {{ current_session_id if current_session_id else 'null' }};
+        
+        function newChat() {
+            currentSessionId = null;
+            document.getElementById('messages').innerHTML = `
+                <div class="empty-state">
+                    <h2>Новый чат</h2>
+                    <p>Задайте ваш первый вопрос</p>
+                </div>
+            `;
+            updateSessionsList();
+        }
+        
+        function loadSession(sessionId) {
+            currentSessionId = sessionId;
+            fetch(`/api/messages/${sessionId}`)
+                .then(r => r.json())
+                .then(messages => {
+                    renderMessages(messages);
+                    updateSessionsList();
+                });
+        }
+        
+        function renderMessages(messages) {
+            const container = document.getElementById('messages');
+            
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>Пустой чат</h2>
+                        <p>Начните диалог с ассистентом</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = messages.map(msg => `
+                <div class="message ${msg.role}">
+                    <div class="message-avatar">${msg.role === 'user' ? 'U' : 'AI'}</div>
+                    <div class="message-content">${formatMessage(msg.content)}</div>
+                </div>
+            `).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function formatMessage(content) {
+            return content
+                .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+        
+        function sendMessage(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="loading"></span>';
+            
+            // Отображаем сообщение пользователя
+            const container = document.getElementById('messages');
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+            
+            container.insertAdjacentHTML('beforeend', `
+                <div class="message user">
+                    <div class="message-avatar">U</div>
+                    <div class="message-content">${formatMessage(message)}</div>
+                </div>
+            `);
+            
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+            
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: message,
+                    session_id: currentSessionId
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                currentSessionId = data.session_id;
+                
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="message assistant">
+                        <div class="message-avatar">AI</div>
+                        <div class="message-content">${formatMessage(data.response)}</div>
+                    </div>
+                `);
+                
+                container.scrollTop = container.scrollHeight;
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = 'Отправить';
+                
+                updateSessionsList();
+            })
+            .catch(err => {
+                console.error(err);
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = 'Отправить';
+            });
+        }
+        
+        function updateSessionsList() {
+            fetch('/api/sessions')
+                .then(r => r.json())
+                .then(sessions => {
+                    const list = document.getElementById('sessionsList');
+                    list.innerHTML = sessions.map(s => `
+                        <div class="session-item ${currentSessionId == s.id ? 'active' : ''}" 
+                             onclick="loadSession(${s.id})">
+                            <div class="session-title">Чат #${s.id}</div>
+                            <div class="session-info">${s.message_count} сообщений</div>
+                        </div>
+                    `).join('');
+                });
+        }
+        
+        function logout() {
+            window.location.href = '{{ url_for("logout") }}';
+        }
+        
+        // Загрузка сообщений при старте
+        if (currentSessionId) {
+            loadSession(currentSessionId);
+        }
+        
+        // Авто-высота textarea
+        const textarea = document.getElementById('messageInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+    </script>
+</body>
+</html>
