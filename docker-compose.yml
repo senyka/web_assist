@@ -1,0 +1,114 @@
+services:
+  # ---------------------------------------------
+  # Redis — бэкенд для сессий и кэша
+  # ---------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: >
+      redis-server 
+      --save 60 1 
+      --loglevel warning 
+      --maxmemory 256mb 
+      --maxmemory-policy allkeys-lru
+    networks:
+      - internal
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ---------------------------------------------
+  # Ollama (без изменений)
+  # ---------------------------------------------
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama  
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+    environment:
+      - OLLAMA_HOST=0.0.0.0  
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen:7b}
+    networks:
+      - internal
+    healthcheck:
+      test: >
+        bash -c '
+          pgrep -x ollama > /dev/null 2>&1 &&
+          echo > /dev/tcp/127.0.0.1/11434
+        '
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 200s 
+
+  # ---------------------------------------------
+  # Flask Portal
+  # ---------------------------------------------
+  web-assist:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile.web-assist
+    container_name: web-assist
+    restart: unless-stopped
+    ports:
+      - "5443:5443"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=false
+      - SECRET_KEY=${SECRET_KEY:-change-me}
+      - DATABASE_URL=sqlite:////app/data/app.db
+      - REDIS_URL=redis://redis:6379/0
+      - LDAP_URI=ldap://lldap:3890
+      - LDAP_BASE_DN=dc=dash-panel,dc=tech
+      - LDAP_ADMIN_DN=uid=tr0jan,ou=people,dc=dash-panel,dc=tech
+      - LDAP_ADMIN_PASSWORD=${LLDAP_ADMIN_PASSWORD:-192837465Senyka!}
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen:7b}
+    volumes:
+      - ./webapp/data:/app/data
+    networks:
+      - internal
+    depends_on:
+      ollama:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5443/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  redis_data:  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
