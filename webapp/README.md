@@ -155,7 +155,7 @@ extra_hosts:
 
 1. Создайте общую сеть:
 ```bash
-docker network create dash-panel-net
+docker network create web-assist-net
 ```
 
 2. В `docker-compose.yml` **LLDAP** добавьте:
