@@ -81,13 +81,13 @@ OLLAMA_MODEL=qwen:7b
 
 # ===== LLDAP (внешний) =====
 # Пароль должен совпадать с настройками вашего LLDAP
-LLDAP_ADMIN_PASSWORD=192837465Senyka!
-LLDAP_ADMIN_USER=tr0jan
+LLDAP_ADMIN_PASSWORD=PassAdmin
+LLDAP_ADMIN_USER=Admin
 
 # LDAP connection settings
 LDAP_URI=ldap://lldap:3890
-LDAP_BASE_DN=dc=dash-panel,dc=tech
-LDAP_ADMIN_DN=uid=tr0jan,ou=people,dc=dash-panel,dc=tech
+LDAP_BASE_DN=dc=assist,dc=com
+LDAP_ADMIN_DN=uid=admin,ou=people,dc=assist,dc=com
 ```
 
 > ⚠️ **Важно**: Если в `SECRET_KEY` есть символ `$`, экранируйте его удвоением: `$$`  
@@ -163,10 +163,10 @@ docker network create dash-panel-net
 services:
   lldap:
     networks:
-      - dash-panel-net
+      - web-assist-net
 
 networks:
-  dash-panel-net:
+  web-assist-net:
     external: true
 ```
 
@@ -175,7 +175,7 @@ networks:
 networks:
   internal:
     external: true
-    name: dash-panel-net
+    name: web-assist-net
 ```
 
 ✅ Преимущество: контейнеры видят друг друга по имени без проброса портов.
@@ -245,7 +245,7 @@ docker compose exec ollama ollama run qwen:7b "Привет! Кто ты?"
 ### Вход в систему
 
 - Пользователи аутентифицируются через **LLDAP**
-- Структура DN: `uid=<username>,ou=people,dc=dash-panel,dc=tech`
+- Структура DN: `uid=<username>,ou=people,dc=assist,dc=com`
 - После успешного входа создаётся запись в локальной БД (если пользователя нет)
 
 ### Управление сессиями
@@ -335,8 +335,8 @@ Session(app)
 | `FLASK_DEBUG` | Включить отладку (`true`/`false`) | `false` | ❌ |
 | `DATABASE_URL` | Строка подключения к БД | `sqlite:////app/data/app.db` | ✅ |
 | `LDAP_URI` | Адрес LDAP-сервера | `ldap://lldap:3890` | ✅ |
-| `LDAP_BASE_DN` | Базовый домен LDAP | `dc=dash-panel,dc=tech` | ✅ |
-| `LDAP_ADMIN_DN` | DN для bind-операций | `uid=tr0jan,ou=people,...` | ✅ |
+| `LDAP_BASE_DN` | Базовый домен LDAP | `dc=assist,dc=com` | ✅ |
+| `LDAP_ADMIN_DN` | DN для bind-операций | `uid=admin,ou=people,...` | ✅ |
 | `LDAP_ADMIN_PASSWORD` | Пароль для bind | `***` | ✅ |
 | `OLLAMA_HOST` | Адрес Ollama API | `http://ollama:11434` | ✅ |
 | `OLLAMA_MODEL` | Модель по умолчанию | `qwen:7b` | ❌ |
@@ -466,7 +466,7 @@ docker compose restart ollama
 
 ```bash
 # Бэкап моделей Ollama
-tar -czf ollama_backup_$(date +%F).tar.gz -C /var/lib/docker/volumes/test_assist-main_ollama_data/_data .
+tar -czf ollama_backup_$(date +%F).tar.gz -C /var/lib/docker/volumes/web_assist-main_ollama_data/_data .
 
 # Бэкап БД приложения
 cp ./webapp/data/app.db ./backup/app_$(date +%F).db
