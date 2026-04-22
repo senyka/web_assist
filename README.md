@@ -1,4 +1,4 @@
-# Tr0jan Assistant — Веб-интерфейс для локального AI
+## Web-Assistant — Веб-интерфейс для локального AI
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
