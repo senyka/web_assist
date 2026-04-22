@@ -1,0 +1,13 @@
+FROM ollama/ollama:latest
+
+USER root
+
+# Устанавливаем bash для /dev/tcp
+RUN if ! command -v bash > /dev/null 2>&1; then \
+      apt-get update && apt-get install -y --no-install-recommends bash && rm -rf /var/lib/apt/lists/*; \
+    fi
+
+COPY scripts/init-ollama.sh /usr/local/bin/init-ollama.sh
+RUN chmod +x /usr/local/bin/init-ollama.sh
+
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/init-ollama.sh"]
