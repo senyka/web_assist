@@ -101,14 +101,3 @@ networks:
 volumes:
   ollama_data:
   redis_data:  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
