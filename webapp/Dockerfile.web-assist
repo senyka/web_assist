@@ -2,26 +2,22 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Установка системных зависимостей
+# Системные зависимости
 RUN apt-get update && apt-get install -y \
-    libldap2-dev \
-    libsasl2-dev \
-    python3-dev \
-    gcc \
+    libldap2-dev libsasl2-dev python3-dev gcc curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Копирование зависимостей
+# Python зависимости
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копирование приложения
+# Приложение
 COPY . .
 
-# Создание директории для данных
-RUN mkdir -p /app
+# Папка для БД
+RUN mkdir -p /app/data
 
-# Экспорт порта
 EXPOSE 5443
 
-# Запуск приложения
 CMD ["gunicorn", "--bind", "0.0.0.0:5443", "--workers", "2", "--timeout", "120", "app:app"]
