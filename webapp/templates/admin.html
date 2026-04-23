@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ панель - OpenCode Assistant</title>
+    <title>Админ панель - Web Assistant</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f5f5f5;
             min-height: 100vh;
         }
-        
+
         .header {
             padding: 20px 40px;
             background: white;
@@ -25,17 +25,17 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .header h1 {
             font-size: 24px;
             color: #2c3e50;
         }
-        
+
         .header-actions {
             display: flex;
             gap: 15px;
         }
-        
+
         .btn {
             padding: 10px 20px;
             border-radius: 6px;
@@ -44,31 +44,31 @@
             font-weight: 600;
             transition: all 0.3s;
         }
-        
+
         .btn-primary {
             background: #3498db;
             color: white;
         }
-        
+
         .btn-primary:hover {
             background: #2980b9;
         }
-        
+
         .btn-secondary {
             background: #95a5a6;
             color: white;
         }
-        
+
         .btn-secondary:hover {
             background: #7f8c8d;
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 30px;
         }
-        
+
         .tabs {
             display: flex;
             gap: 10px;
@@ -76,7 +76,7 @@
             border-bottom: 2px solid #e1e1e1;
             padding-bottom: 10px;
         }
-        
+
         .tab {
             padding: 12px 24px;
             background: transparent;
@@ -88,31 +88,31 @@
             border-radius: 6px 6px 0 0;
             transition: all 0.3s;
         }
-        
+
         .tab.active {
             background: #3498db;
             color: white;
         }
-        
+
         .tab:hover:not(.active) {
             background: #ecf0f1;
         }
-        
+
         .panel {
             display: none;
         }
-        
+
         .panel.active {
             display: block;
         }
-        
+
         .card {
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-        
+
         .card-header {
             padding: 20px;
             background: #f8f9fa;
@@ -121,27 +121,27 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .card-header h2 {
             font-size: 18px;
             color: #2c3e50;
         }
-        
+
         .card-body {
             padding: 0;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         th, td {
             padding: 15px 20px;
             text-align: left;
             border-bottom: 1px solid #e1e1e1;
         }
-        
+
         th {
             background: #f8f9fa;
             font-weight: 600;
@@ -149,51 +149,51 @@
             font-size: 13px;
             text-transform: uppercase;
         }
-        
+
         tr:hover {
             background: #f8f9fa;
         }
-        
+
         .status-badge {
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
         }
-        
+
         .status-success {
             background: #d4edda;
             color: #155724;
         }
-        
+
         .status-error {
             background: #f8d7da;
             color: #721c24;
         }
-        
+
         .status-info {
             background: #d1ecf1;
             color: #0c5460;
         }
-        
+
         .link-btn {
             color: #3498db;
             text-decoration: none;
             font-weight: 500;
             cursor: pointer;
         }
-        
+
         .link-btn:hover {
             text-decoration: underline;
         }
-        
+
         .pagination {
             display: flex;
             justify-content: center;
             gap: 10px;
             padding: 20px;
         }
-        
+
         .page-btn {
             padding: 8px 16px;
             border: 1px solid #e1e1e1;
@@ -202,13 +202,13 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        
+
         .page-btn:hover, .page-btn.active {
             background: #3498db;
             color: white;
             border-color: #3498db;
         }
-        
+
         .modal {
             display: none;
             position: fixed;
@@ -221,11 +221,11 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .modal.active {
             display: flex;
         }
-        
+
         .modal-content {
             background: white;
             border-radius: 10px;
@@ -234,7 +234,7 @@
             max-height: 80vh;
             overflow-y: auto;
         }
-        
+
         .modal-header {
             padding: 20px;
             border-bottom: 1px solid #e1e1e1;
@@ -242,12 +242,12 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .modal-header h3 {
             font-size: 18px;
             color: #2c3e50;
         }
-        
+
         .close-btn {
             background: none;
             border: none;
@@ -255,33 +255,33 @@
             cursor: pointer;
             color: #95a5a6;
         }
-        
+
         .close-btn:hover {
             color: #2c3e50;
         }
-        
+
         .modal-body {
             padding: 20px;
         }
-        
+
         .session-detail {
             margin-bottom: 20px;
         }
-        
+
         .session-detail h4 {
             color: #2c3e50;
             margin-bottom: 10px;
         }
-        
+
         .session-detail p {
             color: #7f8c8d;
             margin-bottom: 5px;
         }
-        
+
         .messages-list {
             margin-top: 20px;
         }
-        
+
         .message-item {
             padding: 15px;
             border-left: 3px solid #3498db;
@@ -289,27 +289,27 @@
             margin-bottom: 15px;
             border-radius: 0 6px 6px 0;
         }
-        
+
         .message-item.user {
             border-left-color: #e74c3c;
         }
-        
+
         .message-item.assistant {
             border-left-color: #27ae60;
         }
-        
+
         .message-role {
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 13px;
             color: #7f8c8d;
         }
-        
+
         .message-text {
             line-height: 1.6;
             color: #2c3e50;
         }
-        
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -325,13 +325,13 @@
             <button class="btn btn-primary" onclick="logout()">Выйти</button>
         </div>
     </header>
-    
+
     <div class="container">
         <div class="tabs">
             <button class="tab active" onclick="switchTab('audit')">📋 Аудит</button>
             <button class="tab" onclick="switchTab('sessions')">👥 Сессии</button>
         </div>
-        
+
         <!-- Панель аудита -->
         <div id="audit-panel" class="panel active">
             <div class="card">
@@ -360,7 +360,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Панель сессий -->
         <div id="sessions-panel" class="panel">
             <div class="card">
@@ -389,7 +389,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Модальное окно просмотра сессии -->
     <div class="modal" id="session-modal">
         <div class="modal-content">
@@ -402,35 +402,35 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         let currentAuditPage = 1;
-        
+
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            
+
             event.target.classList.add('active');
             document.getElementById(`${tabName}-panel`).classList.add('active');
-            
+
             if (tabName === 'audit') {
                 loadAudit(currentAuditPage);
             } else if (tabName === 'sessions') {
                 loadSessions();
             }
         }
-        
+
         function loadAudit(page) {
             fetch(`/api/admin/audit?page=${page}&per_page=50`)
                 .then(r => r.json())
                 .then(data => {
                     const tbody = document.getElementById('audit-table-body');
-                    
+
                     if (data.logs.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="6" class="loading">Нет записей</td></tr>';
                         return;
                     }
-                    
+
                     tbody.innerHTML = data.logs.map(log => `
                         <tr>
                             <td>${log.id}</td>
@@ -441,45 +441,45 @@
                             <td><span class="status-badge status-${getStatusClass(log.response_status)}">${log.response_status}</span></td>
                         </tr>
                     `).join('');
-                    
+
                     renderPagination('audit-pagination', data.current_page, data.pages, loadAudit);
                     currentAuditPage = data.current_page;
                 });
         }
-        
+
         function loadSessions() {
             fetch('/api/admin/sessions')
                 .then(r => r.json())
                 .then(sessions => {
                     const tbody = document.getElementById('sessions-table-body');
-                    
+
                     if (sessions.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="6" class="loading">Нет активных сессий</td></tr>';
                         return;
                     }
-                    
+
                     tbody.innerHTML = sessions.map(s => `
                         <tr>
-                            <td>${s.id}</td>
+                            <td>${escapeHtml(s.session_id)}</td>
                             <td>${escapeHtml(s.username)}</td>
                             <td>${formatDate(s.created_at)}</td>
                             <td>${formatDate(s.last_activity)}</td>
                             <td>${s.message_count}</td>
-                            <td><span class="link-btn" onclick="viewSession(${s.id})">Просмотреть</span></td>
+                            <td><span class="link-btn" onclick="viewSession('${escapeHtml(s.session_id)}')">Просмотреть</span></td>
                         </tr>
                     `).join('');
                 });
         }
-        
+
         function viewSession(sessionId) {
             document.getElementById('session-modal').classList.add('active');
-            
+
             fetch(`/api/admin/session/${sessionId}`)
                 .then(r => r.json())
                 .then(data => {
                     const body = document.getElementById('session-modal-body');
                     const s = data.session;
-                    
+
                     body.innerHTML = `
                         <div class="session-detail">
                             <h4>Информация о сессии</h4>
@@ -489,7 +489,7 @@
                             <p><strong>Последняя активность:</strong> ${formatDate(s.last_activity)}</p>
                             <p><strong>Статус:</strong> <span class="status-badge status-${s.is_active ? 'success' : 'error'}">${s.is_active ? 'Активна' : 'Неактивна'}</span></p>
                         </div>
-                        
+
                         <div class="messages-list">
                             <h4>Сообщения (${data.messages.length})</h4>
                             ${data.messages.map(m => `
@@ -502,42 +502,42 @@
                     `;
                 });
         }
-        
+
         function closeModal() {
             document.getElementById('session-modal').classList.remove('active');
         }
-        
+
         function renderPagination(containerId, currentPage, totalPages, callback) {
             const container = document.getElementById(containerId);
-            
+
             if (totalPages <= 1) {
                 container.innerHTML = '';
                 return;
             }
-            
+
             let html = '';
-            
+
             if (currentPage > 1) {
                 html += `<button class="page-btn" onclick="${callback.name}(${currentPage - 1})">← Назад</button>`;
             }
-            
+
             for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
                 html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="${callback.name}(${i})">${i}</button>`;
             }
-            
+
             if (currentPage < totalPages) {
                 html += `<button class="page-btn" onclick="${callback.name}(${currentPage + 1})">Вперёд →</button>`;
             }
-            
+
             container.innerHTML = html;
         }
-        
+
         function getStatusClass(status) {
             if (status === 'SUCCESS') return 'success';
             if (status === 'ERROR') return 'error';
             return 'info';
         }
-        
+
         function formatDate(isoString) {
             const date = new Date(isoString);
             return date.toLocaleString('ru-RU', {
@@ -548,22 +548,22 @@
                 minute: '2-digit'
             });
         }
-        
+
         function formatMessage(content) {
             return escapeHtml(content)
                 .replace(/\n/g, '<br>');
         }
-        
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
+
         function logout() {
             window.location.href = '{{ url_for("logout") }}';
         }
-        
+
         // Загрузка данных при старте
         loadAudit(1);
     </script>
