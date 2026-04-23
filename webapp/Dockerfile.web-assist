@@ -20,4 +20,6 @@ RUN mkdir -p /app/data
 
 EXPOSE 5443
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5443", "--workers", "2", "--timeout", "120", "app:app"]
+# Запуск приложения с оптимальными настройками для production
+# workers: 2-4 для CPU-bound LLM задач, или $(nproc) для general purpose
+CMD ["gunicorn", "--bind", "0.0.0.0:5443", "--workers", "4", "--threads", "2", "--timeout", "180", "--keep-alive", "5", "app:app"]
