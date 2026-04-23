@@ -1,11 +1,20 @@
-## Web-Assistant — Веб-интерфейс для локального AI
+# Web-Assistant — Веб-интерфейс для локального AI
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Ollama](https://img.shields.io/badge/ollama-000000?style=flat&logo=ollama&logoColor=white)](https://ollama.com/)
 [![LLDAP](https://img.shields.io/badge/ldap-000000?style=flat&logo=ldap&logoColor=white)](https://github.com/lldap/lldap)
+[![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=flat&logo=redis&logoColor=white)](https://redis.io/)
 
 Веб-приложение для работы с локальной языковой моделью **Qwen-7B** через **Ollama** с корпоративной аутентификацией через **LLDAP** (Lightweight LDAP).
+
+**Особенности**:
+- 🔐 LDAP-аутентификация с ролями (администраторы/пользователи)
+- 💾 Redis-сессии с автоматической очисткой
+- 🛡️ CSRF-защита и rate limiting
+- 📊 Админ-панель для управления пользователями и сессиями
+- 🚀 Gunicorn production server
+- 📝 Структурированное JSON-логирование
 
 ---
 
@@ -34,6 +43,7 @@
 |--------|-----------|------|----------|
 | **Ollama** | `ollama` | `11434` | Сервер для запуска LLM (Qwen, Llama, etc.) |
 | **Portal** | `web-assist` | `5443` | Flask-приложение: чат, сессии, админ-панель |
+| **Redis** | `redis` | `6379` | Хранение сессий пользователей |
 | **LLDAP** | *внешний* | `3890` | Lightweight LDAP для аутентификации пользователей |
 
 ---
@@ -46,6 +56,7 @@
 - ✅ Минимум **16 ГБ ОЗУ** для `qwen:7b` (или 8 ГБ для `qwen:1.8b`)
 - ✅ NVIDIA GPU + `nvidia-container-toolkit` — опционально, но рекомендуется
 - ✅ Запущенный **LLDAP** на том же сервере или доступный по сети
+- ✅ Python 3.10+ (для локальной разработки)
 
 ### 1. Клонирование репозитория
 
@@ -82,15 +93,18 @@ OLLAMA_MODEL=qwen:7b
 # ===== LLDAP (внешний) =====
 # Пароль должен совпадать с настройками вашего LLDAP
 LLDAP_ADMIN_PASSWORD=PassAdmin
-LLDAP_ADMIN_USER=Admin
+LLDAP_ADMIN_USER=admin  # Имя администратора для определения прав в приложении
 
 # LDAP connection settings
 LDAP_URI=ldap://lldap:3890
 LDAP_BASE_DN=dc=assist,dc=com
 LDAP_ADMIN_DN=uid=admin,ou=people,dc=assist,dc=com
+
+# ===== Redis =====
+REDIS_URL=redis://redis:6379/0
 ```
 
-> ⚠️ **Важно**: Если в `SECRET_KEY` есть символ `$`, экранируйте его удвоением: `$$`  
+> ⚠️ **Важно**: Если в `SECRET_KEY` есть символ `$`, экранируйте его удвоением: `$$`
 > Пример: `SECRET_KEY=abc$$def` → в приложении будет `abc$def`
 
 ### 3. Запуск стека
@@ -196,6 +210,20 @@ except Exception as e:
 "
 ```
 
+### Проверка соединения с Redis
+
+```bash
+docker compose exec web-assist python3 -c "
+import redis, os
+try:
+    r = redis.from_url(os.environ['REDIS_URL'])
+    r.ping()
+    print('✅ Redis connected')
+except Exception as e:
+    print(f'❌ Redis error: {e}')
+"
+```
+
 ---
 
 ## 🤖 Автозагрузка модели
@@ -277,17 +305,15 @@ docker compose exec ollama ollama run qwen:7b "Привет! Кто ты?"
 
 ### 💾 Хранение сессий
 
-- **По умолчанию**: в памяти (`active_sessions` dict) + SQLite (`sessions` таблица)
-- **Для продакшена**: рекомендуется заменить на Redis:
+- **Redis**: Сессии хранятся в Redis с TTL 24 часа (настраивается через `SESSION_LIFETIME`)
+- **SQLite**: Дублирование в таблице `user_sessions` для аудита и управления
+- **Автоматическая очистка**: Фоновый поток удаляет просроченные сессии каждые 30 минут
+
+Для переключения на хранение только в памяти (не рекомендуется для production):
 
 ```python
-# Пример конфигурации Flask-Session с Redis
-from flask_session import Session
-import redis
-
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_REDIS'] = redis.from_url('redis://redis:6379')
-Session(app)
+# В app.py измените:
+app.config['SESSION_TYPE'] = 'filesystem'  # или 'null'
 ```
 
 ---
@@ -317,7 +343,8 @@ Session(app)
 | Метод | Путь | Описание |
 |-------|------|----------|
 | `GET` | `/admin` | Панель управления |
-| `GET` | `/api/admin/users` | Список пользователей |
+| `GET` | `/api/admin/sessions` | Список всех сессий |
+| `DELETE` | `/api/admin/session/<id>` | Завершить любую сессию |
 | `GET` | `/api/admin/audit` | Журнал аудита |
 
 ---
@@ -334,10 +361,12 @@ Session(app)
 | `FLASK_ENV` | Режим работы (`production`/`development`) | `production` | ❌ |
 | `FLASK_DEBUG` | Включить отладку (`true`/`false`) | `false` | ❌ |
 | `DATABASE_URL` | Строка подключения к БД | `sqlite:////app/data/app.db` | ✅ |
+| `REDIS_URL` | URL подключения к Redis | `redis://redis:6379/0` | ✅ |
 | `LDAP_URI` | Адрес LDAP-сервера | `ldap://lldap:3890` | ✅ |
 | `LDAP_BASE_DN` | Базовый домен LDAP | `dc=assist,dc=com` | ✅ |
 | `LDAP_ADMIN_DN` | DN для bind-операций | `uid=admin,ou=people,...` | ✅ |
 | `LDAP_ADMIN_PASSWORD` | Пароль для bind | `***` | ✅ |
+| `LDAP_ADMIN_USER` | Имя пользователя-администратора | `admin` | ❌ |
 | `OLLAMA_HOST` | Адрес Ollama API | `http://ollama:11434` | ✅ |
 | `OLLAMA_MODEL` | Модель по умолчанию | `qwen:7b` | ❌ |
 
@@ -504,17 +533,21 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 FLASK_DEBUG=false
 ```
 
-3. **Используйте Gunicorn вместо Flask dev-server**:
-
-В `webapp/Dockerfile`:
-```dockerfile
-# В requirements.txt добавьте: gunicorn==21.2.0
-CMD ["gunicorn", "--bind", "0.0.0.0:5443", "--workers", "2", "--timeout", "120", "app:app"]
+3. **Настройте LDAP_ADMIN_USER** — пользователь с этим именем будет иметь права администратора:
+```bash
+LDAP_ADMIN_USER=admin  # Должен совпадать с uid в LLDAP
 ```
 
-4. **Добавьте reverse proxy с HTTPS** (Nginx/Caddy/Traefik)
+4. **Используйте Gunicorn вместо Flask dev-server**:
 
-5. **Ограничьте доступ к портам** через фаервол:
+В `webapp/Dockerfile.web-assist` уже настроен Gunicorn:
+```dockerfile
+CMD ["gunicorn", "--bind", "0.0.0.0:5443", "--workers", "4", "--threads", "2", "--timeout", "180", "app:app"]
+```
+
+5. **Добавьте reverse proxy с HTTPS** (Nginx/Caddy/Traefik)
+
+6. **Ограничьте доступ к портам** через фаервол:
 ```bash
 # Пример для UFW
 sudo ufw allow 5443/tcp  # Portal
@@ -522,7 +555,7 @@ sudo ufw allow 11434/tcp # Ollama (только если нужен внешни
 # sudo ufw deny 3890     # LDAP — только внутри Docker
 ```
 
-6. **Не коммитьте `.env` в репозиторий**:
+7. **Не коммитьте `.env` в репозиторий**:
 ```bash
 echo ".env" >> .gitignore
 ```
@@ -550,10 +583,9 @@ web_assist/
 ├── Dockerfile.ollama           # Кастомный образ Ollama с curl
 │
 └── webapp/
-    ├── Dockerfile              # Образ Flask-приложения
+    ├── Dockerfile.web-assist   # Образ Flask-приложения с Gunicorn
     ├── requirements.txt        # Python-зависимости
-    ├── app.py                  # Основное приложение
-    ├── models.py               # SQLAlchemy модели
+    ├── app.py                  # Основное приложение (Flask + LDAP + Ollama)
     │
     ├── data/                   # SQLite БД (монтируется)
     │   └── app.db
@@ -563,11 +595,25 @@ web_assist/
     │   └── js/
     │
     └── templates/              # Jinja2 шаблоны
-        ├── base.html           # Базовый шаблон
-        ├── login.html          # Страница входа
-        ├── chat.html           # Интерфейс чата
-        └── admin.html          # Админ-панель
+        ├── base.html           # Базовый шаблон с навигацией
+        ├── login.html          # Страница входа (LDAP)
+        ├── chat.html           # Интерфейс чата с AI
+        └── admin.html          # Админ-панель (сессии, аудит)
 ```
+
+### Зависимости приложения
+
+| Пакет | Версия | Назначение |
+|-------|--------|------------|
+| Flask | 3.0.0 | Web framework |
+| Flask-Login | 0.6.3 | Управление пользователями |
+| Flask-SQLAlchemy | 3.1.1 | ORM для БД |
+| Flask-Session | 0.5.0 | Сессионный менеджер |
+| Flask-WTF | 1.2.1 | CSRF защита |
+| python-ldap | 3.4.3 | LDAP клиент |
+| redis | 5.0.1 | Redis клиент |
+| gunicorn | 21.2.0 | Production WSGI server |
+| requests | 2.31.0 | HTTP клиент для Ollama API |
 
 ---
 
@@ -643,9 +689,31 @@ MIT — используйте, изменяйте и распространяй
 - 💡 **Идеи**: Предложите фичу в Discussions
 - 🔧 **Вопросы**: Проверьте секцию [Диагностика](#-диагностика) или создайте issue
 
+### Логи приложения
+
+Приложение использует структурированное JSON-логирование. Пример вывода:
+
+```json
+{"timestamp": "2024-01-15 10:30:45,123", "level": "INFO", "module": "app", "message": "User admin logged in successfully"}
+{"timestamp": "2024-01-15 10:31:02,456", "level": "WARNING", "module": "app", "message": "Rate limit exceeded for IP 192.168.1.100"}
+```
+
+Для просмотра логов:
+
+```bash
+# В реальном времени
+docker compose logs -f web-assist
+
+# Последние 100 строк
+docker compose logs --tail=100 web-assist
+
+# Экспорт в файл
+docker compose logs web-assist > logs.txt
+```
+
 ---
 
-> 🎯 **Совет**: Первый запуск может занять 5–20 минут (скачивание модели).  
+> 🎯 **Совет**: Первый запуск может занять 5–20 минут (скачивание модели).
 > Последующие запуски будут мгновенными — модель остаётся в томе `ollama_data`.
 
 **Готово к работе!** 🚀 Открывайте [`http://localhost:5443`](http://localhost:5443) и начинайте диалог с вашим локальным AI-ассистентом.
