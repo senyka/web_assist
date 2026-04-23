@@ -41,7 +41,7 @@ services:
       - video
     environment:
       - OLLAMA_HOST=0.0.0.0  
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen:7b}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
     networks:
       - internal
     healthcheck:
@@ -69,15 +69,15 @@ services:
     environment:
       - FLASK_ENV=production
       - FLASK_DEBUG=false
-      - SECRET_KEY=${SECRET_KEY:-change-me}
+      - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=sqlite:////app/data/app.db
       - REDIS_URL=redis://redis:6379/0
-      - LDAP_URI=ldap://lldap:3890
-      - LDAP_BASE_DN=dc=dash-panel,dc=tech
-      - LDAP_ADMIN_DN=uid=tr0jan,ou=people,dc=dash-panel,dc=tech
-      - LDAP_ADMIN_PASSWORD=${LLDAP_ADMIN_PASSWORD:-192837465Senyka!}
+      - LDAP_URI=${LDAP_URI}
+      - LDAP_BASE_DN=${LDAP_BASE_DN}
+      - LDAP_ADMIN_DN=${LDAP_ADMIN_DN}
+      - LDAP_ADMIN_PASSWORD=${LLDAP_ADMIN_PASSWORD}
       - OLLAMA_HOST=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen:7b}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
     volumes:
       - ./webapp/data:/app/data
     networks:
@@ -87,6 +87,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    extra_hosts:
+      - "lldap:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5443/health"]
       interval: 30s
